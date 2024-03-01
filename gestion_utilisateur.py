@@ -45,29 +45,49 @@ class UserManager:
         conn.close()
 
     def create_user(self, first_name, last_name, email, phone, project_code, role):
+        password = self.generate_password()  # Générer le mot de passe
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()  # Hacher le mot de passe
         user = User(first_name, last_name, email, phone, project_code, role)
         conn = sqlite3.connect(self.db_file)
         cursor = conn.cursor()
         cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)",
-                       (user.get_name(), user.get_last_name(), user.email, user.phone, user.project_code, user.role, user.password))
+                    (user.get_name(), user.get_last_name(), user.email, user.phone, user.project_code, user.role, hashed_password))  # Utiliser le mot de passe haché
         conn.commit()
         conn.close()
         return user
 
+    def generate_password(self):
+        characters = string.ascii_letters + string.digits + string.punctuation
+        password = ''.join(random.choice(characters) for i in range(12))
+        return password
+
     def modify_user(self, email, **kwargs):
-        conn = sqlite3.connect(self.db_file)
-        cursor = conn.cursor()
-        for key, value in kwargs.items():
-            cursor.execute(f"UPDATE users SET {key}=? WHERE email=?", (value, email))
-        conn.commit()
-        conn.close()
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            update_query = f"UPDATE users SET {', '.join([f'{key}=?' for key in kwargs.keys()])} WHERE email=?"
+            cursor.execute(update_query, tuple(kwargs.values()) + (email,))
+            conn.commit()
+            print("Utilisateur modifié avec succès.")
+        except sqlite3.Error as e:
+            print("Erreur lors de la modification de l'utilisateur :", e)
+        finally:
+            conn.close()
+
 
     def delete_user(self, email):
-        conn = sqlite3.connect(self.db_file)
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM users WHERE email=?", (email,))
-        conn.commit()
-        conn.close()
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM users WHERE email=?", (email,))
+            conn.commit()
+            print("Utilisateur supprimé avec succès.")
+        except sqlite3.Error as e:
+            print("Erreur lors de la suppression de l'utilisateur :", e)
+        finally:
+            conn.close()
+
+
 
     def display_users(self):
         conn = sqlite3.connect(self.db_file)
@@ -91,9 +111,7 @@ def afficher_menu(user_manager):
     return choix
 
 # Vérifier les identifiants de l'utilisateur avant de lui permettre d'accéder au menu
-def login():
-    username = input("Nom d'utilisateur : ")
-    password = input("Mot de passe : ")
+def login(username, password):
     try:
         conn = sqlite3.connect('user.db')
         cursor = conn.cursor()
@@ -119,7 +137,10 @@ def login():
         conn.close()
 
 # Utilisation de la fonction pour se connecter
-user_role = login()
+username = input("Nom d'utilisateur : ")
+password = input("Mot de passe : ")
+
+user_role = login(username, password)
 
 if user_role == 'admin':
     user_manager = UserManager('user.db')
@@ -128,10 +149,13 @@ elif user_role == 'user':
     print("Bienvenue utilisateur normal.")
     # Code pour l'interface utilisateur normal
 else:
-    print("Accès refusé.")
+   
+
+    print("Échec de la connexion.")
 
 # Utilisation de la fonction pour se connecter en tant qu'administrateur
-# Utilisation de la fonction pour se connecter en tant qu'administrateur
+   
+
 if user_role == 'admin':
     user_manager = UserManager('user.db')
 
@@ -150,16 +174,55 @@ if user_role == 'admin':
             nouvel_utilisateur = user_manager.create_user(first_name, last_name, email, phone, project_code, role)
             print("Utilisateur créé avec succès.")
 
+
         elif choix == '2':
             email = input("Entrez l'email de l'utilisateur à modifier : ")
-            # Vous pouvez ajouter d'autres inputs pour les autres attributs à modifier
-            user_manager.modify_user(email)  # Mettez les autres attributs à modifier comme arguments ici
-            print("Utilisateur modifié avec succès.")
+            print("Quels attributs souhaitez-vous modifier ?")
+            print("1. Prénom")
+            print("2. Nom de famille")
+            print("3. Email")
+            print("4. Numéro de téléphone")
+            print("5. Code de projet")
+            print("6. Rôle")
+            
+            attributs_a_modifier = input("Entrez les numéros des attributs séparés par des virgules (ex: 1, 3, 5) : ")
+            attributs_a_modifier = [int(x.strip()) for x in attributs_a_modifier.split(',')]
+            
+            modifications = {}
+            
+            if 1 in attributs_a_modifier:
+                modifications['first_name'] = input("Nouveau prénom : ")
+            if 2 in attributs_a_modifier:
+                modifications['last_name'] = input("Nouveau nom de famille : ")
+            if 3 in attributs_a_modifier:
+                modifications['email'] = input("Nouvel email : ")
+            if 4 in attributs_a_modifier:
+                modifications['phone'] = input("Nouveau numéro de téléphone : ")
+            if 5 in attributs_a_modifier:
+                modifications['project_code'] = input("Nouveau code de projet : ")
+            if 6 in attributs_a_modifier:
+                modifications['role'] = input("Nouveau rôle : ")
+            
+            confirmation = input("Êtes-vous sûr de vouloir modifier cet utilisateur ? (oui/non) : ")
+            if confirmation.lower() == "oui":
+                user_manager.modify_user(email, **modifications)
+                print("Utilisateur modifié avec succès.")
+            else:
+                print("Modification annulée.")
+
+
+
+
 
         elif choix == '3':
             email = input("Entrez l'email de l'utilisateur à supprimer : ")
-            user_manager.delete_user(email)
-            print("Utilisateur supprimé avec succès.")
+            confirmation = input("Êtes-vous sûr de vouloir supprimer cet utilisateur ? (oui/non) : ")
+            if confirmation.lower() == "oui":
+                user_manager.delete_user(email)
+                print("Utilisateur supprimé avec succès.")
+            else:
+                print("Suppression annulée.")
+
 
         elif choix == '4':
             user_manager.display_users()
