@@ -185,7 +185,11 @@ if user_role == 'admin':
             if 5 in attributs_a_modifier:
                 modifications['project_code'] = input("Nouveau code de projet : ")
             if 6 in attributs_a_modifier:
-                modifications['role'] = input("Nouveau rôle : ")
+                new_role = input("Nouveau rôle : ")
+                if new_role.lower() not in user_manager.ROLES:
+                    print("Erreur : Le rôle spécifié n'est pas valide.")
+                   # Sortir de la fonction sans effectuer la modification
+                modifications['role'] = new_role
             
             confirmation = input("Êtes-vous sûr de vouloir modifier cet utilisateur ? (oui/non) : ")
             if confirmation.lower() == "oui":
