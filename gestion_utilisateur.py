@@ -90,37 +90,55 @@ def afficher_menu(user_manager):
     choix = input("Choix : ")
     return choix
 
-# Vérifier les identifiants de l'administrateur avant de lui permettre d'accéder au menu
-def login_as_admin():
+# Vérifier les identifiants de l'utilisateur avant de lui permettre d'accéder au menu
+def login():
     username = input("Nom d'utilisateur : ")
     password = input("Mot de passe : ")
+    try:
+        conn = sqlite3.connect('user.db')
+        cursor = conn.cursor()
 
-    # Connexion à la base de données
-    conn = sqlite3.connect('user.db')
-    cursor = conn.cursor()
+        cursor.execute("SELECT role, password FROM users WHERE email=?", (username,))
+        row = cursor.fetchone()
 
-    # Récupération du mot de passe haché de l'utilisateur admin
-    cursor.execute("SELECT password FROM users WHERE email=?", (username,))
-    row = cursor.fetchone()
+        if row:
+            role, hashed_password = row
+            if hashed_password == hashlib.sha256(password.encode()).hexdigest():
+                print("Connexion réussie.")
+                return role  # Retourner le rôle de l'utilisateur
+            else:
+                print("Mot de passe incorrect.")
+                return None
+        else:
+            print("Utilisateur non trouvé.")
+            return None
+    except sqlite3.Error as e:
+        print("Erreur lors de la connexion :", e)
+        return None
+    finally:
+        conn.close()
 
-    # Vérification du mot de passe
-    if row and row[0] == hashlib.sha256(password.encode()).hexdigest():
-        print("Connexion réussie en tant qu'administrateur.")
-        return True
-    else:
-        print("Identifiants incorrects.")
-        return False
+# Utilisation de la fonction pour se connecter
+user_role = login()
 
-    # Fermeture de la connexion
-    conn.close()
+if user_role == 'admin':
+    user_manager = UserManager('user.db')
+    # Reste du code pour l'interface utilisateur administrateur
+elif user_role == 'user':
+    print("Bienvenue utilisateur normal.")
+    # Code pour l'interface utilisateur normal
+else:
+    print("Accès refusé.")
 
 # Utilisation de la fonction pour se connecter en tant qu'administrateur
-if login_as_admin():
+# Utilisation de la fonction pour se connecter en tant qu'administrateur
+if user_role == 'admin':
     user_manager = UserManager('user.db')
 
     while True:
         choix = afficher_menu(user_manager)
 
+        # Sous le bloc while True dans le menu administrateur
         if choix == '1':
             first_name = input("Entrez le prénom de l'utilisateur : ")
             last_name = input("Entrez le nom de famille de l'utilisateur : ")
@@ -137,4 +155,17 @@ if login_as_admin():
             # Vous pouvez ajouter d'autres inputs pour les autres attributs à modifier
             user_manager.modify_user(email)  # Mettez les autres attributs à modifier comme arguments ici
             print("Utilisateur modifié avec succès.")
+
+        elif choix == '3':
+            email = input("Entrez l'email de l'utilisateur à supprimer : ")
+            user_manager.delete_user(email)
+            print("Utilisateur supprimé avec succès.")
+
+        elif choix == '4':
+            user_manager.display_users()
+
+        elif choix == '5':
+            print("Quitting...")
+            break  # Sortir de la boucle while et terminer le programme
+
 
