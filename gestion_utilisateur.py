@@ -41,6 +41,35 @@ class UserManager:
         self.db_file = db_file
         self.create_table()
 
+    def actions_chercheur(self, email_utilisateur):
+        print("Fonctionnalités pour les chercheurs :")
+        print("- Accès aux documents de recherche en lecture et écriture.")
+        print("- Possibilité de travailler dans plusieurs unités.")
+
+    def actions_medecin(self, email_utilisateur):
+        print("Fonctionnalités pour les médecins :")
+        print("- Accès aux résultats des tests de laboratoire.")
+
+    def actions_commercial(self, email_utilisateur):
+        print("Fonctionnalités pour les commerciaux :")
+        print("- Accès aux caractéristiques et aux avantages des médicaments en lecture seule.")
+
+    def actions_assistant(self, email_utilisateur):
+        print("Fonctionnalités pour les assistants :")
+        print("- Fonctionnalités à définir pour les assistants.")
+
+    def actions_specifiques_utilisateur(self, role_utilisateur, email_utilisateur):
+        if role_utilisateur == 'chercheur':
+            self.actions_chercheur(email_utilisateur)
+        elif role_utilisateur == 'médecin':
+            self.actions_medecin(email_utilisateur)
+        elif role_utilisateur == 'commercial':
+            self.actions_commercial(email_utilisateur)
+        elif role_utilisateur == 'assistant':
+            self.actions_assistant(email_utilisateur)
+        else:
+            print("Rôle non reconnu.")
+
     def create_table(self):
         conn = sqlite3.connect(self.db_file)
         cursor = conn.cursor()
@@ -108,14 +137,112 @@ class UserManager:
         for row in rows:
             print(f"Nom: {row[0]}, Nom de famille: {row[1]}, Email: {row[2]}, Téléphone: {row[3]}, Code de projet: {row[4]}, Rôle: {row[5]}, Region: {row[6]}")
         conn.close()
+    
+    def create_region(self, region_name):
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO regions (region_name) VALUES (?)", (region_name,))
+            conn.commit()
+            print("Région créée avec succès.")
+        except sqlite3.Error as e:
+            print("Erreur lors de la création de la région :", e)
+        finally:
+            conn.close()
 
-def afficher_menu(user_manager):
+
+    def modify_region(self, old_region_name, new_region_name):
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            cursor.execute("UPDATE regions SET region_name=? WHERE region_name=?", (new_region_name, old_region_name))
+            conn.commit()
+            print("Région modifiée avec succès.")
+        except sqlite3.Error as e:
+            print("Erreur lors de la modification de la région :", e)
+        finally:
+            conn.close()
+
+
+    def delete_region(self, region_name):
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM regions WHERE region_name=?", (region_name,))
+            conn.commit()
+            print("Région supprimée avec succès.")
+        except sqlite3.Error as e:
+            print("Erreur lors de la suppression de la région :", e)
+        finally:
+            conn.close()
+
+
+    def create_unit(self, unit_name, region_name):
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO units (unit_name, region_name) VALUES (?, ?)", (unit_name, region_name))
+            conn.commit()
+            print("Unité créée avec succès.")
+        except sqlite3.Error as e:
+            print("Erreur lors de la création de l'unité :", e)
+        finally:
+            conn.close()
+
+
+    def modify_unit(self, old_unit_name, new_unit_name):
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            cursor.execute("UPDATE units SET unit_name=? WHERE unit_name=?", (new_unit_name, old_unit_name))
+            conn.commit()
+            print("Unité modifiée avec succès.")
+        except sqlite3.Error as e:
+            print("Erreur lors de la modification de l'unité :", e)
+        finally:
+            conn.close()
+
+
+    def delete_unit(self, unit_name):
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM units WHERE unit_name=?", (unit_name,))
+            conn.commit()
+            print("Unité supprimée avec succès.")
+        except sqlite3.Error as e:
+            print("Erreur lors de la suppression de l'unité :", e)
+        finally:
+            conn.close()
+
+
+    def assign_project_to_unit(self, project_code, unit_name):
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            cursor.execute("UPDATE users SET project_code=? WHERE unit_name=?", (project_code, unit_name))
+            conn.commit()
+            print("Projet affecté à l'unité avec succès.")
+        except sqlite3.Error as e:
+            print("Erreur lors de l'affectation du projet à l'unité :", e)
+        finally:
+            conn.close()
+
+
+def afficher_menu_admin(user_manager):
     print("\nMenu :")
     print("1. Créer un utilisateur")
     print("2. Modifier un utilisateur")
     print("3. Supprimer un utilisateur")
     print("4. Consulter les utilisateurs")
-    print("5. Quitter l'application")
+    print("5. Créer une région")
+    print("6. Modifier une région")
+    print("7. Supprimer une région")
+    print("8. Créer une unité")
+    print("9. Modifier une unité")
+    print("10. Supprimer une unité")
+    print("11. Affecter un projet à une unité")
+    print("12. Quitter l'application")
 
     choix = input("Choix : ")
     return choix
@@ -171,7 +298,7 @@ if user_role == 'ADMIN':
     user_manager = UserManager('user.db')
 
     while True:
-        choix = afficher_menu(user_manager)
+        choix = choix = afficher_menu_admin(user_manager)
 
         if choix == '1':
             first_name = input("Entrez le prénom de l'utilisateur : ")
@@ -243,5 +370,44 @@ if user_role == 'ADMIN':
             user_manager.display_users()
 
         elif choix == '5':
+            # Création d'une région
+            region_name = input("Nom de la région : ")
+            user_manager.create_region(region_name)
+
+        elif choix == '6':
+            # Modification d'une région
+            old_region_name = input("Ancien nom de la région : ")
+            new_region_name = input("Nouveau nom de la région : ")
+            user_manager.modify_region(old_region_name, new_region_name)
+
+        elif choix == '7':
+            # Suppression d'une région
+            region_name = input("Nom de la région à supprimer : ")
+            user_manager.delete_region(region_name)
+
+        elif choix == '8':
+            # Création d'une unité
+            unit_name = input("Nom de l'unité : ")
+            region_name = input("Nom de la région de l'unité : ")
+            user_manager.create_unit(unit_name, region_name)
+
+        elif choix == '9':
+            # Modification d'une unité
+            old_unit_name = input("Ancien nom de l'unité : ")
+            new_unit_name = input("Nouveau nom de l'unité : ")
+            user_manager.modify_unit(old_unit_name, new_unit_name)
+
+        elif choix == '10':
+            # Suppression d'une unité
+            unit_name = input("Nom de l'unité à supprimer : ")
+            user_manager.delete_unit(unit_name)
+
+        elif choix == '11':
+            # Affecter un projet à une unité
+            project_code = input("Code du projet : ")
+            unit_name = input("Nom de l'unité : ")
+            user_manager.assign_project_to_unit(project_code, unit_name)
+
+        elif choix == '12':
             print("Quitting...")
             break
