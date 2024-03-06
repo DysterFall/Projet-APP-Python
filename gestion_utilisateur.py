@@ -4,80 +4,111 @@ import string
 import sqlite3
 
 class User:
-    class UserManager:
-        ROLES = ['chercheur', 'medecin', 'commercial', 'assistant']
+    def __init__(self, first_name, last_name, email, phone, project_code, role, region):
+        self.first_name = first_name
+        self.last_name = last_name
+        self.email = email
+        self.phone = phone
+        self.project_code = project_code
+        self.role = role
+        self.region = region
 
-        def __init__(self, db_file):
-            self.db_file = db_file
-            self.create_table()
+    def get_first_name(self):
+        return self.first_name
 
-        def create_table(self):
+    def get_last_name(self):
+        return self.last_name
+
+    def get_email(self):
+        return self.email
+
+    def get_phone(self):
+        return self.phone
+
+    def get_project_code(self):
+        return self.project_code
+
+    def get_role(self):
+        return self.role
+
+    def get_region(self):
+        return self.region
+
+class UserManager:
+    ROLES = ['chercheur', 'medecin', 'commercial', 'assistant']
+
+    def __init__(self, db_file):
+        self.db_file = db_file
+        self.create_table()
+
+    def create_table(self):
+        conn = sqlite3.connect(self.db_file)
+        cursor = conn.cursor()
+        cursor.execute('''CREATE TABLE IF NOT EXISTS users
+                        (first_name TEXT, last_name TEXT, email TEXT PRIMARY KEY, phone TEXT, project_code TEXT, role TEXT, password TEXT, region TEXT)''')
+        conn.commit()
+        conn.close()
+
+    def create_user(self, first_name, last_name, email, phone, project_code, role, region):
+        if role.lower() not in self.ROLES:
+            print("Erreur : Le rôle spécifié n'est pas valide.")
+            return None
+
+        password = self.generate_password()
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        new_user = User(first_name, last_name, email, phone, project_code, role, region)
+        conn = sqlite3.connect(self.db_file)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (new_user.get_first_name(), new_user.get_last_name(), new_user.get_email(), new_user.get_phone(), new_user.get_project_code(), new_user.get_role(), new_user.get_region(), hashed_password))
+        conn.commit()
+        conn.close()
+        return new_user
+
+    def generate_password(self):
+        characters = string.ascii_letters + string.digits + string.punctuation
+        password = ''.join(random.choice(characters) for i in range(12))
+        return password
+
+    def modify_user(self, email, region=None, **kwargs):
+        try:
             conn = sqlite3.connect(self.db_file)
             cursor = conn.cursor()
-            cursor.execute('''CREATE TABLE IF NOT EXISTS users
-                         (first_name TEXT, last_name TEXT, email TEXT PRIMARY KEY, phone TEXT, project_code TEXT, role TEXT, password TEXT)''')
-            conn.commit()
-            conn.close()
-
-        def create_user(self, first_name, last_name, email, phone, project_code, role):
-            if role.lower() not in self.ROLES:
-                print("Erreur : Le rôle spécifié n'est pas valide.")
-                return None
-
-            password = self.generate_password()  # Générer le mot de passe
-            hashed_password = hashlib.sha256(password.encode()).hexdigest()  # Hacher le mot de passe
-            user = User(first_name, last_name, email, phone, project_code, role)
-            conn = sqlite3.connect(self.db_file)
-            cursor = conn.cursor()
-            cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)",
-                        (user.get_name(), user.get_last_name(), user.email, user.phone, user.project_code, user.role, hashed_password))  # Utiliser le mot de passe haché
-            conn.commit()
-            conn.close()
-            return user
-
-        def generate_password(self):
-            characters = string.ascii_letters + string.digits + string.punctuation
-            password = ''.join(random.choice(characters) for i in range(12))
-            return password
-
-        def modify_user(self, email, **kwargs):
-            try:
-                conn = sqlite3.connect(self.db_file)
-                cursor = conn.cursor()
-                update_query = f"UPDATE users SET {', '.join([f'{key}=?' for key in kwargs.keys()])} WHERE email=?"
+            update_query = f"UPDATE users SET {', '.join([f'{key}=?' for key in kwargs.keys()])}"
+            if region:
+                update_query += ", region=?"
+                cursor.execute(update_query, tuple(kwargs.values()) + (region, email))
+            else:
+                update_query += " WHERE email=?"
                 cursor.execute(update_query, tuple(kwargs.values()) + (email,))
-                conn.commit()
-                print("Utilisateur modifié avec succès.")
-            except sqlite3.Error as e:
-                print("Erreur lors de la modification de l'utilisateur :", e)
-            finally:
-                conn.close()
-
-
-        def delete_user(self, email):
-            try:
-                conn = sqlite3.connect(self.db_file)
-                cursor = conn.cursor()
-                cursor.execute("DELETE FROM users WHERE email=?", (email,))
-                conn.commit()
-                print("Utilisateur supprimé avec succès.")
-            except sqlite3.Error as e:
-                print("Erreur lors de la suppression de l'utilisateur :", e)
-            finally:
-                conn.close()
-
-
-
-        def display_users(self):
-            conn = sqlite3.connect(self.db_file)
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users")
-            rows = cursor.fetchall()
-            for row in rows:
-                print(f"Nom: {row[0]}, Nom de famille: {row[1]}, Email: {row[2]}, Téléphone: {row[3]}, Code de projet: {row[4]}, Rôle: {row[5]}, Mot de passe: {row[6]}")
+            conn.commit()
+            print("Utilisateur modifié avec succès.")
+        except sqlite3.Error as e:
+            print("Erreur lors de la modification de l'utilisateur :", e)
+        finally:
             conn.close()
 
-# Fonction pour afficher le menu et traiter les choix de l'utilisateur
+    def delete_user(self, email):
+        try:
+            conn = sqlite3.connect(self.db_file)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM users WHERE email=?", (email,))
+            conn.commit()
+            print("Utilisateur supprimé avec succès.")
+        except sqlite3.Error as e:
+            print("Erreur lors de la suppression de l'utilisateur :", e)
+        finally:
+            conn.close()
+
+    def display_users(self):
+        conn = sqlite3.connect(self.db_file)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users")
+        rows = cursor.fetchall()
+        for row in rows:
+            print(f"Nom: {row[0]}, Nom de famille: {row[1]}, Email: {row[2]}, Téléphone: {row[3]}, Code de projet: {row[4]}, Rôle: {row[5]}, Region: {row[6]}")
+        conn.close()
+
 def afficher_menu(user_manager):
     print("\nMenu :")
     print("1. Créer un utilisateur")
@@ -89,7 +120,6 @@ def afficher_menu(user_manager):
     choix = input("Choix : ")
     return choix
 
-# Vérifier les identifiants de l'utilisateur avant de lui permettre d'accéder au menu
 def login(username, password):
     try:
         conn = sqlite3.connect('user.db')
@@ -100,6 +130,8 @@ def login(username, password):
 
         if row:
             role, hashed_password = row
+            print("Rôle récupéré :", role)
+            print("Mot de passe haché récupéré :", hashed_password)
             attempt = 0
             while attempt < 3:
                 if hashed_password == hashlib.sha256(password.encode()).hexdigest():
@@ -120,30 +152,27 @@ def login(username, password):
     finally:
         conn.close()
 
-
-# Utilisation de la fonction pour se connecter
 username = input("Nom d'utilisateur : ")
 password = input("Mot de passe : ")
 
 user_role = login(username, password)
+print("Rôle récupéré :", user_role)
 
-if user_role == 'admin':
-    user_manager = User.UserManager('user.db')
-    # Reste du code pour l'interface utilisateur administrateur
+if user_role == 'ADMIN':
+    user_manager = UserManager('user.db')
+
 elif user_role == 'user':
     print("Bienvenue utilisateur normal.")
-    # Code pour l'interface utilisateur normal
+
 else:
     print("Échec de la connexion.")
 
-# Utilisation de la fonction pour se connecter en tant qu'administrateur
-if user_role == 'admin':
-    user_manager = User.UserManager('user.db')
+if user_role == 'ADMIN':
+    user_manager = UserManager('user.db')
 
     while True:
         choix = afficher_menu(user_manager)
 
-        # Sous le bloc while True dans le menu administrateur
         if choix == '1':
             first_name = input("Entrez le prénom de l'utilisateur : ")
             last_name = input("Entrez le nom de famille de l'utilisateur : ")
@@ -151,13 +180,13 @@ if user_role == 'admin':
             phone = input("Entrez le numéro de téléphone de l'utilisateur : ")
             project_code = input("Entrez le code du projet de l'utilisateur : ")
             role = input("Entrez le rôle de l'utilisateur : ")
+            region = input("Entrez la région de l'utilisateur : ")
 
-            nouvel_utilisateur = user_manager.create_user(first_name, last_name, email, phone, project_code, role)
+            nouvel_utilisateur = user_manager.create_user(first_name, last_name, email, phone, project_code, role, region)
             if nouvel_utilisateur:
                 print("Utilisateur créé avec succès.")
             else:
                 print("L'utilisateur n'a pas été créé en raison d'un rôle non valide.")
-
 
         elif choix == '2':
             email = input("Entrez l'email de l'utilisateur à modifier : ")
@@ -168,6 +197,7 @@ if user_role == 'admin':
             print("4. Numéro de téléphone")
             print("5. Code de projet")
             print("6. Rôle")
+            print("7. Région")
             
             attributs_a_modifier = input("Entrez les numéros des attributs séparés par des virgules (ex: 1, 3, 5) : ")
             attributs_a_modifier = [int(x.strip()) for x in attributs_a_modifier.split(',')]
@@ -188,8 +218,9 @@ if user_role == 'admin':
                 new_role = input("Nouveau rôle : ")
                 if new_role.lower() not in user_manager.ROLES:
                     print("Erreur : Le rôle spécifié n'est pas valide.")
-                   # Sortir de la fonction sans effectuer la modification
                 modifications['role'] = new_role
+            if 7 in attributs_a_modifier:
+                modifications['region'] = input("Nouvelle région : ")
             
             confirmation = input("Êtes-vous sûr de vouloir modifier cet utilisateur ? (oui/non) : ")
             if confirmation.lower() == "oui":
@@ -197,6 +228,7 @@ if user_role == 'admin':
                 print("Utilisateur modifié avec succès.")
             else:
                 print("Modification annulée.")
+
 
         elif choix == '3':
             email = input("Entrez l'email de l'utilisateur à supprimer : ")
@@ -212,4 +244,4 @@ if user_role == 'admin':
 
         elif choix == '5':
             print("Quitting...")
-            break  # Sortir de la boucle while et terminer le programme
+            break
