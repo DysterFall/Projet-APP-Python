@@ -9,19 +9,16 @@ cursor = conn.cursor()
 cursor.execute('''CREATE TABLE IF NOT EXISTS users
              (first_name TEXT, last_name TEXT, email TEXT PRIMARY KEY, phone TEXT, project_code TEXT, role TEXT, region TEXT, password TEXT)''')
 
-# Création de la table regions si elle n'existe pas
-cursor.execute('''CREATE TABLE IF NOT EXISTS regions
-             (id INTEGER PRIMARY KEY, name TEXT)''')
+# Vérification si l'utilisateur lambda existe déjà
+cursor.execute("SELECT * FROM users WHERE email=?", ("lambda@example.com",))
+existing_lambda = cursor.fetchone()
 
-# Création de la table units si elle n'existe pas
-cursor.execute('''CREATE TABLE IF NOT EXISTS units
-             (id INTEGER PRIMARY KEY, name TEXT, region_id INTEGER,
-             FOREIGN KEY(region_id) REFERENCES regions(id))''')
+# Si l'utilisateur lambda existe déjà, le supprimer
+if existing_lambda:
+    cursor.execute("DELETE FROM users WHERE email=?", ("lambda@example.com",))
 
-# Création de la table projects si elle n'existe pas
-cursor.execute('''CREATE TABLE IF NOT EXISTS projects
-             (code TEXT PRIMARY KEY, name TEXT, unit_id INTEGER,
-             FOREIGN KEY(unit_id) REFERENCES units(id))''')
+# Hashage du mot de passe pour l'utilisateur lambda
+lambda_password = hashlib.sha256("lambda123".encode()).hexdigest()
 
 # Vérifier si l'utilisateur admin existe déjà
 cursor.execute("SELECT * FROM users WHERE email=?", ("admin@example.com",))
@@ -35,6 +32,9 @@ if existing_admin:
 admin_password = hashlib.sha256("password123".encode()).hexdigest()
 cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                ("Admin", "User", "admin@example.com", "123456789", "999", "ADMIN", "France", admin_password))
+cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+               ("Lambda", "User", "lambda@example.com", "987654321", "888", "chercheur", "Canada", lambda_password))
+
 
 # Validation des modifications et fermeture de la connexion
 conn.commit()
