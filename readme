@@ -2,4 +2,6 @@ Login Admin
 username: admin@example.com
 password: password123
 
-Erreur a corrigé: Les fonctionalités 5 a 11 du menu admin ne mettents pas a jour la bdd
+Login user:
+username: lambda@example.com
+password: lambda123
