@@ -1,91 +1,104 @@
 import hashlib
+import sqlite3
 import random
 import string
-import sqlite3
 
+# Classe représentant un utilisateur
 class User:
+    # Constructeur de la classe User
     def __init__(self, first_name, last_name, email, phone, project_code, role, region, password):
-        self.first_name = first_name
-        self.last_name = last_name
-        self.email = email
-        self.phone = phone
-        self.project_code = project_code
-        self.role = role
-        self.region = region
-        self.password = password
+        # Initialisation des attributs de l'utilisateur
+        self.__first_name = first_name
+        self.__last_name = last_name
+        self.__email = email
+        self.__phone = phone
+        self.__project_code = project_code
+        self.__role = role
+        self.__region = region
+        self.__password = password
 
+    # Méthodes pour obtenir et définir le prénom de l'utilisateur
     def get_first_name(self):
-        return self.first_name
+        return self.__first_name
 
     def set_first_name(self, new_first_name):
-        self.first_name = new_first_name
+        self.__first_name = new_first_name
 
+    # Méthodes similaires pour les autres attributs de l'utilisateur...
     def get_last_name(self):
-        return self.last_name
+            return self.__last_name
 
     def set_last_name(self, new_last_name):
-        self.last_name = new_last_name
+        self.__last_name = new_last_name
 
     def get_email(self):
-        return self.email
+        return self.__email
 
     def set_email(self, new_email):
-        self.email = new_email
+        self.__email = new_email
 
     def get_phone(self):
-        return self.phone
+        return self.__phone
 
     def set_phone(self, new_phone):
-        self.phone = new_phone
+        self.__phone = new_phone
 
     def get_project_code(self):
-        return self.project_code
+        return self.__project_code
 
     def set_project_code(self, new_project_code):
-        self.project_code = new_project_code
+        self.__project_code = new_project_code
 
     def get_role(self):
-        return self.role
+        return self.__role
 
     def set_role(self, new_role):
-        self.role = new_role
+        self.__role = new_role
 
     def get_region(self):
-        return self.region
+        return self.__region
 
     def set_region(self, new_region):
-        self.region = new_region
+        self.__region = new_region
 
     def get_password(self):
-        return self.password
+        return self.__password
 
     def set_password(self, new_password):
-        self.password = new_password
-
+        self.__password = new_password
+# Classe gérant les utilisateurs
 class UserManager:
     ROLES = ['chercheur', 'medecin', 'commercial', 'assistant']
 
+    # Constructeur de la classe UserManager
     def __init__(self, db_file):
+        # Initialise le nom du fichier de base de données et crée la table des utilisateurs si elle n'existe pas
         self.db_file = db_file
         self.create_table()
 
+    # Méthodes pour les fonctionnalités spécifiques aux différents rôles d'utilisateurs
     def actions_chercheur(self, email_utilisateur):
+        # Affiche les fonctionnalités pour les chercheurs
         print("Fonctionnalités pour les chercheurs :")
         print("- Accès aux documents de recherche en lecture et écriture.")
         print("- Possibilité de travailler dans plusieurs unités.")
 
     def actions_medecin(self, email_utilisateur):
+        # Affiche les fonctionnalités pour les médecins
         print("Fonctionnalités pour les médecins :")
         print("- Accès aux résultats des tests de laboratoire.")
 
     def actions_commercial(self, email_utilisateur):
+        # Affiche les fonctionnalités pour les commerciaux
         print("Fonctionnalités pour les commerciaux :")
         print("- Accès aux caractéristiques et aux avantages des médicaments en lecture seule.")
 
     def actions_assistant(self, email_utilisateur):
+        # Affiche les fonctionnalités pour les assistants
         print("Fonctionnalités pour les assistants :")
         print("- Fonctionnalités à définir pour les assistants.")
 
+    # Méthode pour appeler les actions spécifiques selon le rôle de l'utilisateur
     def actions_specifiques_utilisateur(self, role_utilisateur, email_utilisateur):
         if role_utilisateur == 'chercheur':
             self.actions_chercheur(email_utilisateur)
@@ -98,6 +111,7 @@ class UserManager:
         else:
             print("Rôle non reconnu.")
 
+    # Méthode pour créer la table des utilisateurs dans la base de données
     def create_table(self):
         conn = sqlite3.connect(self.db_file)
         cursor = conn.cursor()
@@ -106,11 +120,12 @@ class UserManager:
         conn.commit()
         conn.close()
 
+    # Méthode pour créer un nouvel utilisateur dans la base de données
     def create_user(self, first_name, last_name, email, phone, project_code, role, region, password):
         if role.lower() not in self.ROLES:
             print("Erreur : Le rôle spécifié n'est pas valide.")
             return None
-
+    
         hashed_password = self.hash_password(password)
         new_user = User(first_name, last_name, email, phone, project_code, role, region, hashed_password)
         conn = sqlite3.connect(self.db_file)
@@ -121,9 +136,11 @@ class UserManager:
         conn.close()
         return new_user
 
+    # Méthode pour hacher le mot de passe avec SHA-256
     def hash_password(self, password):
         return hashlib.sha256(password.encode()).hexdigest()
 
+    # Méthode pour modifier les détails d'un utilisateur dans la base de données
     def modify_user(self, email, **kwargs):
         try:
             conn = sqlite3.connect(self.db_file)
@@ -139,6 +156,7 @@ class UserManager:
         finally:
             conn.close()
 
+    # Méthode pour supprimer un utilisateur de la base de données
     def delete_user(self, email):
         try:
             conn = sqlite3.connect(self.db_file)
@@ -151,6 +169,7 @@ class UserManager:
         finally:
             conn.close()
 
+    # Méthode pour afficher tous les utilisateurs présents dans la base de données
     def display_users(self):
         conn = sqlite3.connect(self.db_file)
         cursor = conn.cursor()
@@ -160,6 +179,7 @@ class UserManager:
             print(f"Nom: {row[0]}, Nom de famille: {row[1]}, Email: {row[2]}, Téléphone: {row[3]}, Code de projet: {row[4]}, Rôle: {row[5]}, Region: {row[6]}")
         conn.close()
 
+    # Méthode pour afficher le menu d'administration pour les utilisateurs autorisés
     def afficher_menu_admin(self):
         print("\nMenu :")
         print("1. Créer un utilisateur")
@@ -171,6 +191,7 @@ class UserManager:
         choix = input("Choix : ")
         return choix
 
+    # Méthode pour vérifier les informations d'identification de l'utilisateur lors de la connexion
     def login(self, username, password):
         try:
             conn = sqlite3.connect(self.db_file)
