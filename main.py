@@ -61,7 +61,30 @@ if user_role == 'ADMIN':
                 user_manager.modify_user(email, first_name=new_first_name)
                 print("Prénom modifié avec succès.")
             # Répétez pour les autres attributs...
-
+            if 2 in attributs_a_modifier:
+                new_last_name = input("Nouveau nom de famille : ")
+                user_manager.modify_user(email, last_name=new_last_name)
+                print("Nom de famille modifié avec succès.")
+            if 3 in attributs_a_modifier:
+                new_email = input("Nouvel email : ")
+                user_manager.modify_user(email, email=new_email)
+                print("Email modifié avec succès.")
+            if 4 in attributs_a_modifier:
+                new_phone = input("Nouveau numéro de téléphone : ")
+                user_manager.modify_user(email, phone=new_phone)
+                print("Numéro de téléphone modifié avec succès.")
+            if 5 in attributs_a_modifier:
+                new_project_code = input("Nouveau code de projet : ")
+                user_manager.modify_user(email, project_code=new_project_code)
+                print("Code de projet modifié avec succès.")
+            if 6 in attributs_a_modifier:
+                new_role = input("Nouveau rôle : ")
+                user_manager.modify_user(email, role=new_role)
+                print("Rôle modifié avec succès.")
+            if 7 in attributs_a_modifier:
+                new_region = input("Nouvelle région : ")
+                user_manager.modify_user(email, region=new_region)
+                print("Région modifiée avec succès.")
         # Supprimer un utilisateur
         elif choix == '3':
             email = input("Entrez l'email de l'utilisateur à supprimer : ")
