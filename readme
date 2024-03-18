@@ -1,7 +1,9 @@
 Login Admin
 username: admin@example.com
+login: AUser
 password: password123
 
 Login user:
 username: lambda@example.com
+login: LUser
 password: lambda123
