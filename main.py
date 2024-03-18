@@ -3,7 +3,7 @@ import sqlite3
 from class_manager import UserManager  # Import de la classe UserManager depuis un autre fichier
 import secrets
 import string
-#test
+#testtest
 
 def generate_password(length=12):
     alphabet = string.ascii_letters + string.digits + string.punctuation
