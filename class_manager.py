@@ -6,7 +6,7 @@ import string
 # Classe représentant un utilisateur
 class User:
     # Constructeur de la classe User
-    def __init__(self, first_name, last_name, email, phone, project_code, role, region, password):
+    def __init__(self, first_name, last_name, email, phone, project_code, role, region, password, login):
         # Initialisation des attributs de l'utilisateur
         self.__first_name = first_name
         self.__last_name = last_name
@@ -16,6 +16,7 @@ class User:
         self.__role = role
         self.__region = region
         self.__password = password
+        self.__login = login 
 
     # Méthodes pour obtenir et définir le prénom de l'utilisateur
     def get_first_name(self):
@@ -66,6 +67,13 @@ class User:
 
     def set_password(self, new_password):
         self.__password = new_password
+
+    def get_login(self):
+        return self.__login
+
+    def set_login(self, new_login):
+        self.__login = new_login
+
 # Classe gérant les utilisateurs
 class UserManager:
     ROLES = ['chercheur', 'medecin', 'commercial', 'assistant']
@@ -116,22 +124,22 @@ class UserManager:
         conn = sqlite3.connect(self.db_file)
         cursor = conn.cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS users
-                        (first_name TEXT, last_name TEXT, email TEXT PRIMARY KEY, phone TEXT, project_code TEXT, role TEXT, password TEXT, region TEXT)''')
+                        (first_name TEXT, last_name TEXT, email TEXT PRIMARY KEY, phone TEXT, project_code TEXT, role TEXT, password TEXT, region TEXT, login TEXT)''')
         conn.commit()
         conn.close()
 
     # Méthode pour créer un nouvel utilisateur dans la base de données
-    def create_user(self, first_name, last_name, email, phone, project_code, role, region, password):
+    def create_user(self, first_name, last_name, email, phone, project_code, role, region, password, login):
         if role.lower() not in self.ROLES:
             print("Erreur : Le rôle spécifié n'est pas valide.")
             return None
     
         hashed_password = self.hash_password(password)
-        new_user = User(first_name, last_name, email, phone, project_code, role, region, hashed_password)
+        new_user = User(first_name, last_name, email, phone, project_code, role, region, hashed_password, login)
         conn = sqlite3.connect(self.db_file)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                    (new_user.get_first_name(), new_user.get_last_name(), new_user.get_email(), new_user.get_phone(), new_user.get_project_code(), new_user.get_role(), new_user.get_region(), new_user.get_password()))
+        cursor.execute("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (new_user.get_first_name(), new_user.get_last_name(), new_user.get_email(), new_user.get_phone(), new_user.get_project_code(), new_user.get_role(), new_user.get_region(), new_user.get_password(), new_user.get_login()))
         conn.commit()
         conn.close()
         return new_user
@@ -192,12 +200,12 @@ class UserManager:
         return choix
 
     # Méthode pour vérifier les informations d'identification de l'utilisateur lors de la connexion
-    def login(self, username, password):
+    def login(self, login, password):
         try:
             conn = sqlite3.connect(self.db_file)
             cursor = conn.cursor()
 
-            cursor.execute("SELECT role, password FROM users WHERE email=?", (username,))
+            cursor.execute("SELECT role, password FROM users WHERE login=?", (login,))
             row = cursor.fetchone()
 
             if row:

@@ -1,16 +1,24 @@
 import hashlib
 import sqlite3
 from class_manager import UserManager  # Import de la classe UserManager depuis un autre fichier
+import secrets
+import string
+
+
+def generate_password(length=12):
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    password = ''.join(secrets.choice(alphabet) for i in range(length))
+    return password
 
 # Demande à l'utilisateur de saisir son nom d'utilisateur et son mot de passe
-username = input("Nom d'utilisateur : ")
+login = input("Nom d'utilisateur : ")
 password = input("Mot de passe : ")
 
 # Création d'une instance de UserManager en utilisant la base de données 'user.db'
 user_manager = UserManager('user.db')
 
 # Utilisation de la méthode login pour vérifier les informations d'identification
-user_role = user_manager.login(username, password)
+user_role = user_manager.login(login, password)
 
 # Si l'utilisateur est un administrateur
 if user_role == 'ADMIN':
@@ -28,10 +36,13 @@ if user_role == 'ADMIN':
             project_code = input("Entrez le code du projet de l'utilisateur : ")
             role = input("Entrez le rôle de l'utilisateur : ")
             region = input("Entrez la région de l'utilisateur : ")
-            new_password = input("Entrez le mot de passe de l'utilisateur : ")
+            new_password = generate_password()
+            login = first_name[0].lower() + last_name.lower()
+            print("Le login est: ", login)
+            print("Mot de passe généré :", new_password)
 
             # Création d'un nouvel utilisateur avec les informations saisies
-            nouvel_utilisateur = user_manager.create_user(first_name, last_name, email, phone, project_code, role, region, new_password)
+            nouvel_utilisateur = user_manager.create_user(first_name, last_name, email, phone, project_code, role, region, new_password, login)
             if nouvel_utilisateur:
                 print("Utilisateur créé avec succès.")
             else:
