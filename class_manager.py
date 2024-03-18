@@ -2,7 +2,7 @@ import hashlib
 import sqlite3
 import random
 import string
-
+#test
 # Classe représentant un utilisateur
 class User:
     # Constructeur de la classe User

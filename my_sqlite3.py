@@ -1,6 +1,6 @@
 import sqlite3
 import hashlib
-
+#test
 # Connexion à la base de données
 conn = sqlite3.connect('user.db')
 cursor = conn.cursor()
