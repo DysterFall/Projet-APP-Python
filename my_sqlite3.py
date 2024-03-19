@@ -28,7 +28,7 @@ existing_admin = cursor.fetchone()
 if existing_admin:
     cursor.execute("DELETE FROM users WHERE login=?", ("AUser",))
 
-# Insertion de l'utilisateur admin
+# Insertion de l'utilisateur admin et de l'utisateur lambda
 admin_password = hashlib.sha256("password123".encode()).hexdigest()
 admin_login = "AUser"
 lambda_login = "LUser"
