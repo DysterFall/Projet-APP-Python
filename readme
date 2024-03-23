@@ -1,3 +1,20 @@
+My project is a user interface application designed for scientists, commercial professionals, etc., allowing them to access and manage their projects.
+
+Additionally, the application includes a login system where administrators can log in and moderate users by:
+
+    Adding new users
+    Modifying user details
+    Deleting users
+    Displaying user information
+
+All user data will be securely stored in our database for efficient management.
+
+To run the application, start by launching the file 'mysqlite3.py' to create the necessary database. Then, you can proceed to run the main file to access the application.
+
+
+
+
+
 Login Admin
 username: admin@example.com
 login: AUser
